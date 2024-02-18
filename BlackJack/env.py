@@ -23,39 +23,23 @@ class Blackjack:
         else:
             return [0, self.player_hand_sum, self.dealer_hand_sum]
 
-    def play_game_from_state(self, state, action, policy):
-        self.reset()
-        self.player_has_ace = state[0]
-        self.player_hand_sum = state[1]
-        self.dealer_hand_sum = state[2]
+    def play_game(self, policy):
+        self.initialize_game()
 
-        return self.play_game(action, policy)
-
-    def play_game(self, action, policy):
         states = []
         actions = []
-        reward = 0
 
-        state = self.get_state()
-        states.append(state)
-        actions.append(action)
-
-        if action != 0: # player hit
-            self.player_hit()
-
-            while self.player_hand_sum <= 21:
-                state = self.get_state()
-                states.append(state)
-                actions.append(policy[state[0]][state[1]][state[2]])
-
-                if actions[-1] == 1:
-                    self.player_hit()
-                else:
-                    break
+        while self.player_hand_sum <= 21:
+            states.append(self.get_state())
+            s = self.get_state()
+            action = np.random.choice([0, 1], p=policy[s[0], s[1], s[2]])
+            actions.append(action)
+            if action == 1: # Hit
+                self.player_hit()
+            else:
+                break
 
         self.dealer_policy()
-
-        # print(f"result = {self.player_hand_sum} {self.dealer_hand_sum}")
 
         if self.player_hand_sum > self.dealer_hand_sum and self.player_hand_sum <= 21:
             reward = 1
@@ -67,6 +51,12 @@ class Blackjack:
             reward = -1
 
         return states, actions, reward
+    
+    def initialize_game(self):
+        self.reset()
+        self.player_hit()
+        self.player_hit()
+        self.dealer_hit()
 
     def generate_random_card(self):
         return random.choice(self.cards)
@@ -81,16 +71,23 @@ class Blackjack:
         if self.dealer_hand_sum >= 17:
             return
         else:
-            card = self.generate_random_card()
-            if card == 11:
-                if self.dealer_hand_sum <= 10:
-                    self.dealer_hand_sum += 11
-                    self.dealer_has_ace = True
-                else:
-                    self.dealer_hand_sum += 1
-            else:
-                self.dealer_hand_sum += card
+            self.dealer_hit()
         self.dealer_policy()
+
+    def dealer_hit(self):
+        card = self.generate_random_card()
+        if card == 11:
+            if self.dealer_hand_sum <= 10:
+                self.dealer_hand_sum += 11
+                self.dealer_has_ace = True
+            else:
+                self.dealer_hand_sum += 1
+        else:
+            self.dealer_hand_sum += card
+
+        if self.dealer_hand_sum > 21 and self.dealer_has_ace == True:
+            self.dealer_hand_sum -= 10
+            self.dealer_has_ace = False
 
     def player_hit(self):
         card = self.generate_random_card()
@@ -100,7 +97,8 @@ class Blackjack:
                 self.player_has_ace = True
             else:
                 self.player_hand_sum += 1
-        self.player_hand_sum += card
+        else:
+            self.player_hand_sum += card
 
         if self.player_hand_sum > 21 and self.player_has_ace == True:
             self.player_hand_sum -= 10
