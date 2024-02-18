@@ -24,14 +24,15 @@ class Agent:
         self.weight_sum_y = np.zeros((self.racetrack.dimention_x, self.racetrack.dimention_y, 3))
         self.target_y = np.zeros((self.racetrack.dimention_x, self.racetrack.dimention_y))
 
+    
     def step(self):
         # change the behavior to a slightly changed target policy
-        behavior_x = np.full((self.racetrack.dimention_x, self.racetrack.dimention_y, 3), 1/5)
-        behavior_y = np.full((self.racetrack.dimention_x, self.racetrack.dimention_y, 3), 1/5)
+        behavior_x = np.full((self.racetrack.dimention_x, self.racetrack.dimention_y, 3), (1 - self.mu) / 2)
+        behavior_y = np.full((self.racetrack.dimention_x, self.racetrack.dimention_y, 3), (1 - self.mu) / 2)
         for x in range(self.racetrack.dimention_x):
             for y in range(self.racetrack.dimention_y):
-                behavior_x[x, y, int(self.target_x[x, y])] = 3/5
-                behavior_y[x, y, int(self.target_y[x, y])] = 3/5
+                behavior_x[x, y, int(self.target_x[x, y])] = self.mu
+                behavior_y[x, y, int(self.target_y[x, y])] = self.mu
 
         states, actions, rewards = self.racetrack.play_game(behavior_x, behavior_y)
 
